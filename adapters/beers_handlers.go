@@ -113,7 +113,7 @@ func (h *BeersHandler) CreateBeer(c *fiber.Ctx) error {
 	request.BeerImgPath = filepath
 	err = h.beerUseCase.CreateBeer(request)
 	if err != nil {
-		return h.SendErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return h.SendErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 	return h.SendSuccessResponse(c, nil)
 }
@@ -128,7 +128,7 @@ func (h *BeersHandler) GetBeers(c *fiber.Ctx) error {
 		PageSize: pageSize,
 	})
 	if err != nil {
-		return h.SendErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return h.SendErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 	return h.SendSuccessResponse(c, responses)
 }
@@ -150,7 +150,7 @@ func (h *BeersHandler) UpdateBeer(c *fiber.Ctx) error {
 	request.BeerImgPath = filepath
 	err = h.beerUseCase.UpdateBeer(id, request)
 	if err != nil {
-		return h.SendErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return h.SendErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 	return h.SendSuccessResponse(c, nil)
 }
@@ -162,7 +162,7 @@ func (h *BeersHandler) DeleteBeer(c *fiber.Ctx) error {
 	}
 	err = h.beerUseCase.DeleteBeer(uint64(id))
 	if err != nil {
-		return h.SendErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		return h.SendErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 	return h.SendSuccessResponse(c, nil)
 }
