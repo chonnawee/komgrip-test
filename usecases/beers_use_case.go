@@ -14,15 +14,16 @@ type GetBeersResponse struct {
 }
 
 type GetBeersRequest struct {
+	BeerName string
 	Page     int
 	PageSize int
 }
 
 type BeersRequest struct {
-	BeerTypeName string `json:"beer_type_name"`
-	BeerName     string `json:"beer_name"`
-	BeerDesc     string `json:"beer_desc"`
-	BeerImgPath  string `json:"beer_img_path"`
+	BeerTypeName string `form:"beer_type_name" validate:"required"`
+	BeerName     string `form:"beer_name" validate:"required"`
+	BeerDesc     string `form:"beer_desc"`
+	BeerImgPath  string `form:"beer_img_path"`
 }
 
 type BeersUseCase interface {
@@ -42,7 +43,7 @@ func NewBeersService(uow UnitOfWork) BeersUseCase {
 
 func (s *BeersService) setBeerData(request BeersRequest, flag string) entities.Beers {
 	data := entities.Beers{
-		BeerTypeName: request.BeerName,
+		BeerTypeName: request.BeerTypeName,
 		BeerName:     request.BeerName,
 		BeerDesc:     request.BeerDesc,
 		BeerImgPath:  request.BeerImgPath,
@@ -77,8 +78,9 @@ func (s *BeersService) GetBeers(request GetBeersRequest) (responses []GetBeersRe
 	}
 	offset := (request.Page - 1) * request.PageSize
 	beers, err := s.uow.BeersRepo().GetDatas(GetDatasParams{
-		Limit:  limit,
-		Offset: offset,
+		BeerName: request.BeerName,
+		Limit:    limit,
+		Offset:   offset,
 	})
 	responses = make([]GetBeersResponse, 0, len(beers))
 	for _, beer := range beers {
