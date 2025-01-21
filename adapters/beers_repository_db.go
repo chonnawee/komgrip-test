@@ -41,6 +41,14 @@ func (r *beersRepositoryDB) GetDatas(params usecases.GetDatasParams) (beers []en
 	return beers, nil
 }
 
+func (r *beersRepositoryDB) GetData(id uint64) (beer *entities.Beers, err error) {
+	err = r.db.Where("id = ?", id).First(&beer).Error
+	if err != nil {
+		return nil, err
+	}
+	return beer, nil
+}
+
 func (r *beersRepositoryDB) Update(id uint64, beer entities.Beers) error {
 	err := r.db.Where("id = ?", id).Updates(&beer).Error
 	if err != nil {
