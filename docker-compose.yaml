@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  mariadb:
+    image: mariadb:11
+    container_name: mariadb
+    restart: always
+    ports:
+      - "3306:3306" 
+    environment:
+      MARIADB_ROOT_PASSWORD: 12345678
+      MARIADB_DATABASE: beer 
+      MARIADB_USER: sharp                  
+      MARIADB_PASSWORD: 12345678 
+    volumes:
+      - db_data:/var/lib/mysql 
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+
+volumes:
+  db_data:
