@@ -1,8 +1,14 @@
 package adapters
 
 import (
+	"errors"
 	"komgrip-test/usecases"
+	"math/rand"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -20,6 +26,60 @@ type Response struct {
 
 func NewBeersHandler(beerUseCase usecases.BeersUseCase) *BeersHandler {
 	return &BeersHandler{beerUseCase: beerUseCase}
+}
+
+func (h *BeersHandler) validateExtension(filename string, allowExtensions []string) bool {
+	ext := strings.ToLower(filepath.Ext(filename))
+	for _, allowExt := range allowExtensions {
+		if ext == allowExt {
+			return true
+		}
+	}
+	return false
+}
+
+func (h *BeersHandler) getFilePath(folderName string) (string, error) {
+	path := filepath.Join("storage", folderName)
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		err := os.MkdirAll(path, os.ModePerm)
+		if err != nil {
+			return "", err
+		}
+	}
+	return path, nil
+}
+
+func (h *BeersHandler) generateFileName(extenstion string) string {
+	timestamp := time.Now().Format("2006_01_02")
+	randomNumber := rand.Intn(1000)
+
+	filename := timestamp + "_" + strconv.Itoa(randomNumber) + extenstion
+
+	return filename
+}
+
+func (h *BeersHandler) storeFile(c *fiber.Ctx) (path string, err error) {
+	file, _ := c.FormFile("beer_img")
+	pathResonse := ""
+	if file != nil {
+		if !h.validateExtension(file.Filename, []string{".jpg", ".jpeg", ".png"}) {
+			return "", errors.New("invalid image type")
+		}
+		path, err := h.getFilePath("beers")
+		if err != nil {
+			return "", err
+		}
+		extenstion := filepath.Ext(file.Filename)
+		filename := h.generateFileName(extenstion)
+		filepath := path + "/" + filename
+		pathResonse = filepath
+		err = c.SaveFile(file, filepath)
+		if err != nil {
+			return "", err
+		}
+	}
+	return pathResonse, nil
 }
 
 func (h *BeersHandler) SendSuccessResponse(c *fiber.Ctx, data interface{}) error {
@@ -41,12 +101,17 @@ func (h *BeersHandler) SendErrorResponse(c *fiber.Ctx, statusCode int, message s
 }
 
 func (h *BeersHandler) CreateBeer(c *fiber.Ctx) error {
-	var requests usecases.BeersRequest
-	err := c.BodyParser(&requests)
+	filepath, err := h.storeFile(c)
 	if err != nil {
 		return h.SendErrorResponse(c, fiber.StatusBadRequest, err.Error())
 	}
-	err = h.beerUseCase.CreateBeer(requests)
+	var request usecases.BeersRequest
+	err = c.BodyParser(&request)
+	if err != nil {
+		return h.SendErrorResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	request.BeerImgPath = filepath
+	err = h.beerUseCase.CreateBeer(request)
 	if err != nil {
 		return h.SendErrorResponse(c, fiber.StatusBadRequest, err.Error())
 	}
@@ -73,12 +138,17 @@ func (h *BeersHandler) UpdateBeer(c *fiber.Ctx) error {
 	if err != nil {
 		return h.SendErrorResponse(c, fiber.StatusBadRequest, err.Error())
 	}
-	var requests usecases.BeersRequest
-	err = c.BodyParser(&requests)
+	filepath, err := h.storeFile(c)
 	if err != nil {
 		return h.SendErrorResponse(c, fiber.StatusBadRequest, err.Error())
 	}
-	err = h.beerUseCase.UpdateBeer(id, requests)
+	var request usecases.BeersRequest
+	err = c.BodyParser(&request)
+	if err != nil {
+		return h.SendErrorResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	request.BeerImgPath = filepath
+	err = h.beerUseCase.UpdateBeer(id, request)
 	if err != nil {
 		return h.SendErrorResponse(c, fiber.StatusBadRequest, err.Error())
 	}
