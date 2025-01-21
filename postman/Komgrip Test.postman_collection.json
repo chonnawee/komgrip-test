@@ -1,0 +1,158 @@
+{
+	"info": {
+		"_postman_id": "bace69d4-e685-4e3f-88e9-750458b5843d",
+		"name": "Komgrip Test",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "4740838"
+	},
+	"item": [
+		{
+			"name": "CreateBeer",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "beer_name",
+							"value": "",
+							"type": "text"
+						},
+						{
+							"key": "beer_type_name",
+							"value": "",
+							"type": "text"
+						},
+						{
+							"key": "beer_desc",
+							"value": "",
+							"type": "text"
+						},
+						{
+							"key": "beer_img",
+							"type": "file",
+							"src": "/Users/chonnaweeboonmadee/Downloads/50bbb857-452b-4d3a-a342-adecf650e7bf.jpeg"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8080/beer",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"beer"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetBeers",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "http://localhost:8080/beer?beer_name=&page=1&page_size=10",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"beer"
+					],
+					"query": [
+						{
+							"key": "beer_name",
+							"value": ""
+						},
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "page_size",
+							"value": "10"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UpdateBeer",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "beer_name",
+							"value": "",
+							"type": "text"
+						},
+						{
+							"key": "beer_type_name",
+							"value": "",
+							"type": "text"
+						},
+						{
+							"key": "beer_desc",
+							"value": "",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8080/beer/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"beer",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DeleteBeer",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "http://localhost:8080/beer/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"beer",
+						"1"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
