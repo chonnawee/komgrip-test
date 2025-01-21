@@ -10,5 +10,4 @@ type Beers struct {
 	BeerImgPath  string    `gorm:"column:beer_img_path;not null;comment:path รูปเบียร์"`
 	CreatedAt    time.Time `gorm:"column:created_at;comment:วันที่สร้างข้อมูล"`
 	UpdatedAt    time.Time `gorm:"column:updated_at;comment:วันที่แก้ไขข้อมูล"`
-	BeerType     BeerTypes `gorm:"foreignKey:BeerTypeID"`
 }
