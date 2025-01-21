@@ -14,6 +14,8 @@ services:
       MARIADB_PASSWORD: 12345678 
     volumes:
       - db_data:/var/lib/mysql 
+    networks:
+      - komgrip-network
 
   app:
     build:
@@ -24,6 +26,30 @@ services:
       - "8080:8080"
     volumes:
       - .:/app
+    networks:
+      - komgrip-network
+
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: 123456
+      MONGO_INITDB_DATABASE: logs
+      MONGO_INITDB_USERNAME: sharp
+      MONGO_INITDB_PASSWORD: 111111
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - komgrip-network
 
 volumes:
   db_data:
+  mongo-data:
+    driver: local
+networks:
+  komgrip-network:
+    driver: bridge
