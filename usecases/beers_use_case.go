@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"komgrip-test/entities"
+	"os"
 	"time"
 )
 
@@ -23,7 +24,7 @@ type BeersRequest struct {
 	BeerTypeName string `form:"beer_type_name" validate:"required"`
 	BeerName     string `form:"beer_name" validate:"required"`
 	BeerDesc     string `form:"beer_desc"`
-	BeerImgPath  string `form:"beer_img_path"`
+	BeerImgPath  string
 }
 
 type BeersUseCase interface {
@@ -72,14 +73,14 @@ func (s *BeersService) CreateBeer(request BeersRequest) error {
 }
 
 func (s *BeersService) GetBeers(request GetBeersRequest) (responses []GetBeersResponse, err error) {
-	limit := 1
+	page := 1
 	if request.Page > 1 {
-		limit = request.Page
+		page = request.Page
 	}
-	offset := (request.Page - 1) * request.PageSize
+	offset := (page - 1) * request.PageSize
 	beers, err := s.uow.BeersRepo().GetDatas(GetDatasParams{
 		BeerName: request.BeerName,
-		Limit:    limit,
+		Limit:    request.PageSize,
 		Offset:   offset,
 	})
 	responses = make([]GetBeersResponse, 0, len(beers))
@@ -114,11 +115,16 @@ func (s *BeersService) DeleteBeer(id uint64) error {
 	if err != nil {
 		return err
 	}
+	beer, err := s.uow.BeersRepo().GetData(id)
+	if err != nil {
+		return err
+	}
 	err = s.uow.BeersRepo().Delete(id)
 	if err != nil {
 		s.uow.Rollback()
 		return err
 	}
 	s.uow.Commit()
+	os.Remove(beer.BeerImgPath)
 	return nil
 }
