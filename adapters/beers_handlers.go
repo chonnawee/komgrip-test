@@ -2,6 +2,7 @@ package adapters
 
 import (
 	"komgrip-test/usecases"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -54,7 +55,44 @@ func (h *BeersHandler) CreateBeer(c *fiber.Ctx) error {
 
 func (h *BeersHandler) GetBeers(c *fiber.Ctx) error {
 	beerName := c.Query("beer_name")
+	page, _ := strconv.Atoi(c.Query("page"))
+	pageSize, _ := strconv.Atoi(c.Query("page_size"))
+	responses, err := h.beerUseCase.GetBeers(usecases.GetBeersRequest{
+		BeerName: beerName,
+		Page:     page,
+		PageSize: pageSize,
+	})
+	if err != nil {
+		return h.SendErrorResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return h.SendSuccessResponse(c, responses)
 }
 
-func (h *BeersHandler) UpdateBeer(c *fiber.Ctx) error
-func (h *BeersHandler) DeleteBeer(c *fiber.Ctx) error
+func (h *BeersHandler) UpdateBeer(c *fiber.Ctx) error {
+	id, err := strconv.ParseUint(c.Params("id"), 10, 64)
+	if err != nil {
+		return h.SendErrorResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	var requests usecases.BeersRequest
+	err = c.BodyParser(&requests)
+	if err != nil {
+		return h.SendErrorResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	err = h.beerUseCase.UpdateBeer(id, requests)
+	if err != nil {
+		return h.SendErrorResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return h.SendSuccessResponse(c, nil)
+}
+
+func (h *BeersHandler) DeleteBeer(c *fiber.Ctx) error {
+	id, err := strconv.ParseUint(c.Params("id"), 10, 64)
+	if err != nil {
+		return h.SendErrorResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	err = h.beerUseCase.DeleteBeer(uint64(id))
+	if err != nil {
+		return h.SendErrorResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return h.SendSuccessResponse(c, nil)
+}
