@@ -1,10 +1,18 @@
 package usecases
 
 import (
+	"encoding/json"
 	"komgrip-test/entities"
 	"os"
 	"time"
 )
+
+type beerLogData struct {
+	Method      string
+	RequestData interface{}
+	Status      string
+	Message     string
+}
 
 type GetBeersResponse struct {
 	ID           uint64 `json:"id"`
@@ -21,6 +29,7 @@ type GetBeersRequest struct {
 }
 
 type BeersRequest struct {
+	ID           uint64
 	BeerTypeName string `form:"beer_type_name" validate:"required"`
 	BeerName     string `form:"beer_name" validate:"required"`
 	BeerDesc     string `form:"beer_desc"`
@@ -34,15 +43,40 @@ type BeersUseCase interface {
 	DeleteBeer(id uint64) error
 }
 
-type BeersService struct {
-	uow UnitOfWork
+type beersService struct {
+	uow          UnitOfWork
+	beerLogsRepo BeerLogsRepository
 }
 
-func NewBeersService(uow UnitOfWork) BeersUseCase {
-	return &BeersService{uow: uow}
+func NewBeersService(uow UnitOfWork, beerLogsRepo BeerLogsRepository) BeersUseCase {
+	return &beersService{uow: uow, beerLogsRepo: beerLogsRepo}
 }
 
-func (s *BeersService) setBeerData(request BeersRequest, flag string) entities.Beers {
+func (s *beersService) setBeerLogData(logData beerLogData) entities.BeerLogs {
+	jsonReqData, _ := json.Marshal(logData.RequestData)
+	data := entities.BeerLogs{
+		Method:      logData.Method,
+		RequestData: string(jsonReqData),
+		Status:      logData.Status,
+		CreatedAt:   time.Now(),
+	}
+	return data
+}
+
+func (s *beersService) createLog(method string, requestData BeersRequest, status string, msg string) error {
+	err := s.beerLogsRepo.CreateLog(s.setBeerLogData(beerLogData{
+		Method:      method,
+		RequestData: requestData,
+		Status:      status,
+		Message:     msg,
+	}))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *beersService) setBeerData(request BeersRequest, flag string) entities.Beers {
 	data := entities.Beers{
 		BeerTypeName: request.BeerTypeName,
 		BeerName:     request.BeerName,
@@ -58,7 +92,7 @@ func (s *BeersService) setBeerData(request BeersRequest, flag string) entities.B
 	return data
 }
 
-func (s *BeersService) CreateBeer(request BeersRequest) error {
+func (s *beersService) CreateBeer(request BeersRequest) error {
 	err := s.uow.Begin()
 	if err != nil {
 		return err
@@ -66,13 +100,21 @@ func (s *BeersService) CreateBeer(request BeersRequest) error {
 	err = s.uow.BeersRepo().Create(s.setBeerData(request, "add"))
 	if err != nil {
 		s.uow.Rollback()
+		logErr := s.createLog("POST", request, "FAIL", err.Error())
+		if logErr != nil {
+			return logErr
+		}
 		return err
 	}
 	s.uow.Commit()
+	logErr := s.createLog("POST", request, "SUCCESS", "")
+	if logErr != nil {
+		return logErr
+	}
 	return nil
 }
 
-func (s *BeersService) GetBeers(request GetBeersRequest) (responses []GetBeersResponse, err error) {
+func (s *beersService) GetBeers(request GetBeersRequest) (responses []GetBeersResponse, err error) {
 	page := 1
 	if request.Page > 1 {
 		page = request.Page
@@ -96,7 +138,7 @@ func (s *BeersService) GetBeers(request GetBeersRequest) (responses []GetBeersRe
 	return responses, nil
 }
 
-func (s *BeersService) UpdateBeer(id uint64, request BeersRequest) error {
+func (s *beersService) UpdateBeer(id uint64, request BeersRequest) error {
 	err := s.uow.Begin()
 	if err != nil {
 		return err
@@ -104,27 +146,47 @@ func (s *BeersService) UpdateBeer(id uint64, request BeersRequest) error {
 	err = s.uow.BeersRepo().Update(id, s.setBeerData(request, "update"))
 	if err != nil {
 		s.uow.Rollback()
+		logErr := s.createLog("PUT", request, "FAIL", err.Error())
+		if logErr != nil {
+			return logErr
+		}
 		return err
 	}
 	s.uow.Commit()
+	logErr := s.createLog("PUT", request, "SUCCESS", "")
+	if logErr != nil {
+		return logErr
+	}
 	return nil
 }
 
-func (s *BeersService) DeleteBeer(id uint64) error {
+func (s *beersService) DeleteBeer(id uint64) error {
 	err := s.uow.Begin()
 	if err != nil {
 		return err
 	}
 	beer, err := s.uow.BeersRepo().GetData(id)
 	if err != nil {
+		logErr := s.createLog("PUT", BeersRequest{ID: id}, "FAIL", err.Error())
+		if logErr != nil {
+			return logErr
+		}
 		return err
 	}
 	err = s.uow.BeersRepo().Delete(id)
 	if err != nil {
 		s.uow.Rollback()
+		logErr := s.createLog("PUT", BeersRequest{ID: id}, "FAIL", err.Error())
+		if logErr != nil {
+			return logErr
+		}
 		return err
 	}
 	s.uow.Commit()
 	os.Remove(beer.BeerImgPath)
+	logErr := s.createLog("DELETE", BeersRequest{ID: id}, "SUCCESS", "")
+	if logErr != nil {
+		return logErr
+	}
 	return nil
 }
