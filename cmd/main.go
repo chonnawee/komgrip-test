@@ -84,7 +84,7 @@ func main() {
 			log.Fatalf("Failed to disconnect MongoDB: %v", err)
 		}
 	}()
-	mongoDB := mongoClient.Database("example")
+	mongoDB := mongoClient.Database(os.Getenv("MONGO_DB_DATABASE"))
 
 	app := fiber.New(fiber.Config{
 		JSONEncoder: json.Marshal,
