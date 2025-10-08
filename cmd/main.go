@@ -96,6 +96,9 @@ func main() {
 	usecase := usecases.NewBeersService(uow, beerLogRepo)
 	handler := adapters.NewBeersHandler(usecase)
 
+	//test feat1
+	//test feat1 2
+
 	app.Post("/beer", handler.CreateBeer)
 	app.Get("/beer", handler.GetBeers)
 	app.Put("/beer/:id", handler.UpdateBeer)
